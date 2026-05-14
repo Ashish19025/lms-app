@@ -15,7 +15,7 @@ export default function HomeScreen() {
   }, []);
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }}>
       <View className="px-4 py-4 bg-white border-b border-gray-200">
         <View className="mb-4">
           <Text className="text-sm text-gray-500">Welcome back,</Text>
