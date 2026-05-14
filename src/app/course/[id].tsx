@@ -88,8 +88,8 @@ export default function CourseDetailsScreen() {
       <View className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 flex-row items-center justify-between">
         <View className="flex-col">
           <Text className="text-xs text-gray-500 uppercase font-semibold">Price</Text>
-          <Text className="text-2xl font-bold text-gray-900">${course.price - (course.price * course.discountPercentage / 100).toFixed(2)}</Text>
-          <Text className="text-xs text-gray-400 line-through">${course.price}</Text>
+          <Text className="text-2xl font-bold text-gray-900">${(course.price - (course.price * course.discountPercentage / 100)).toFixed(2)}</Text>
+          <Text className="text-xs text-gray-400 line-through">${course.price.toFixed(2)}</Text>
         </View>
         
         <Button 

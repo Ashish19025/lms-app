@@ -13,10 +13,6 @@ export default function Index() {
     );
   }
 
-  // Redirect based on auth state
-  if (user) {
-    return <Redirect href="/(tabs)/home" />;
-  }
-
-  return <Redirect href="/(auth)/login" />;
+  // Bypass auth checks for now and go directly to home
+  return <Redirect href="/(tabs)/home" />;
 }
