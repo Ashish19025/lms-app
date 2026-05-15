@@ -4,7 +4,6 @@ import { Platform } from 'react-native';
 // Configure how notifications behave when the app is in the foreground
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
     shouldShowBanner: true,
@@ -44,6 +43,17 @@ export const scheduleBookmarkMilestoneNotification = async () => {
   });
 };
 
+export const BookmarkNotification = async (courseTitle: string) => {
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "Course Bookmarked",
+      body: `You bookmarked ${courseTitle}.`,
+      data: { type: 'bookmark' },
+    },
+    trigger: null, // trigger immediately
+  });
+};
+
 export const scheduleInactivityReminder = async () => {
   // Cancel previous reminders so we don't spam if user is active
   await Notifications.cancelAllScheduledNotificationsAsync();
@@ -55,10 +65,9 @@ export const scheduleInactivityReminder = async () => {
       body: "It's been 24 hours. Jump back in and continue your learning journey! 🚀",
       data: { type: 'inactivity' },
     },
-    trigger: {
-      type: 'timeInterval',
-      seconds: 60 * 60 * 24, // 24 hours
-      repeats: false,
-    },
+      trigger: ({
+        seconds: 60 * 60 * 24, // 24 hours
+        repeats: false,
+      } as any),
   });
 };

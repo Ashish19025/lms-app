@@ -9,23 +9,28 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function LoginScreen() {
   const router = useRouter();
   const { signIn, isLoading, error } = useAuthStore();
-  const [username, setUsername] = useState('freeapi_user'); // Dummy data for faster testing if needed
-  const [password, setPassword] = useState('freeapi_password');
+  const [username, setUsername] = useState<string>(''); // Dummy data for faster testing if needed
+  const [password, setPassword] = useState<string>('');
 
   const handleLogin = async () => {
     if (!username || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
-    
+
     try {
-      await signIn({ username, password });
+      // Check if input is an email, and pass the appropriate property
+      const isEmail = username.includes('@');
+      const payload = Object.assign(
+        { password },
+        isEmail ? { email: username.trim().toLowerCase() } : { username: username.trim().toLowerCase() }
+      );
+      
+      await signIn(payload);
     } catch (e) {
       // Error is handled in the store
     }
-  };
-
-  return (
+  };  return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -45,10 +50,11 @@ export default function LoginScreen() {
 
           <Input
             label="Username or Email"
-            placeholder="Enter your username"
+            placeholder="Enter your username or email"
             value={username}
             onChangeText={setUsername}
             autoCapitalize="none"
+            keyboardType="email-address"
           />
 
           <Input

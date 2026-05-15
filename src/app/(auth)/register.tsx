@@ -5,6 +5,7 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { useAuthStore } from '../../store/auth.store';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { logger } from '../../lib/logger';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -21,11 +22,10 @@ export default function RegisterScreen() {
     
     try {
       await signUp({ username, email, password });
-      Alert.alert('Success', 'Account created successfully!', [
-        { text: 'OK', onPress: () => router.push('/(auth)/login') }
-      ]);
+      // The _layout guard will automatically intercept the active user in the store and push to home
     } catch (e) {
-      // Error handled in store
+      logger.error('Registration failed', e);
+      // Error is handled in the store
     }
   };
 

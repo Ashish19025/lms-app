@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, Image, TouchableOpacity } from 'react-native'; 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCourseStore } from '../../store/course.store';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Course } from '../../types/course.types';
 import { Button } from '../../components/ui/Button';
+import { BookmarkButton } from '../../components/course/BookmarkButton';
 
 export default function CourseDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -47,14 +48,19 @@ export default function CourseDetailsScreen() {
           <View className="w-full h-64 bg-gray-300 items-center justify-center">
             <Text className="text-gray-500">No image available</Text>
           </View>
-        )}<View className="p-5 bg-white mb-2 shadow-sm rounded-b-3xl border-b border-gray-100">
+        )}
+        
+        <View className="p-5 bg-white mb-2 shadow-sm rounded-b-3xl border-b border-gray-100">
           <View className="flex-row justify-between items-center mb-3">
             <View className="bg-blue-100 px-3 py-1 rounded-full">
               <Text className="text-blue-700 font-semibold text-xs uppercase tracking-wide">{course.category}</Text>
             </View>
-            <View className="flex-row items-center gap-2">
-              <Text className="text-yellow-500 text-lg">★</Text>
-              <Text className="font-bold text-gray-700">{course.rating}</Text>
+            <View className="flex-row items-center gap-4">
+              <View className="flex-row items-center gap-1">
+                <Text className="text-yellow-500 text-lg">★</Text>
+                <Text className="font-bold text-gray-700">{course.rating}</Text>
+              </View>
+              <BookmarkButton courseId={course.id} />
             </View>
           </View>
           
@@ -62,8 +68,8 @@ export default function CourseDetailsScreen() {
           
           {course.instructor && (
             <View className="flex-row items-center mt-3 bg-gray-50 p-3 rounded-lg">
-              <Image 
-                source={{ uri: course.instructor.picture.large }} 
+              <Image
+                source={{ uri: course.instructor?.picture?.large || 'https://via.placeholder.com/150' }}
                 className="h-12 w-12 rounded-full border border-gray-200 mr-3"
               />
               <View>

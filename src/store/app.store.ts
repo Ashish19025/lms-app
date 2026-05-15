@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { storeData, getData } from '../services/storage/asyncStorage';
-import { scheduleBookmarkMilestoneNotification } from '../services/notifications/notification.service';
+import { scheduleBookmarkMilestoneNotification , BookmarkNotification} from '../services/notifications/notification.service';
+import { useNotificationStore } from './notification.store';
+import { useCourseStore } from './course.store';
 
 const BOOKMARKS_KEY = '@bookmarked_courses';
 
@@ -33,10 +35,31 @@ export const useAppStore = create<AppState>((set, get) => ({
       newBookmarks = currentBookmarks.filter((bookmarkId) => bookmarkId !== id);
     } else {
       newBookmarks = [...currentBookmarks, id];
+      
+      const course = useCourseStore.getState().courses.find(c => c.id === id);
+      const courseTitle = course ? course.title : 'this course';
+      
+      useNotificationStore.getState().addNotification({
+        title: 'Course Bookmarked',
+        message: `You bookmarked ${courseTitle}.`,
+        type: 'bookmark'
+      });
+
       // Trigger milestone notification when exactly 5 courses are bookmarked
       if (newBookmarks.length === 5) {
         scheduleBookmarkMilestoneNotification();
+        useNotificationStore.getState().addNotification({
+          title: 'Milestone Reached! ',
+          message: `You've bookmarked 5 courses! Time to start learning them?`,
+          type: 'system'
+        });
       }
+    }
+
+    if (!isBookmarked) {
+      const course = useCourseStore.getState().courses.find(c => c.id === id);
+      const courseTitle = course ? course.title : 'this course';
+      await BookmarkNotification(courseTitle);
     }
     
     set({ bookmarkedIds: newBookmarks });

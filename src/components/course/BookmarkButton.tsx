@@ -1,25 +1,27 @@
 import React from 'react';
-import { TouchableOpacity, Text } from 'react-native';
-import { useAppStore } from '../../store/app.store';
+import { TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useBookmarks } from '../../hooks/useBookmarks';
 
 interface BookmarkButtonProps {
   courseId: number;
 }
 
 export const BookmarkButton: React.FC<BookmarkButtonProps> = ({ courseId }) => {
-  const bookmarkedIds = useAppStore(state => state.bookmarkedIds);
-  const toggleBookmark = useAppStore(state => state.toggleBookmark);
-  const isBookmarked = bookmarkedIds.includes(courseId);
+  const { isBookmarked, toggleBookmark } = useBookmarks();
+  const bookmarked = isBookmarked(courseId);
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       onPress={() => toggleBookmark(courseId)}
-      className="p-1 items-center justify-center flex-row"
+      className="p-2 items-center justify-center bg-white/80 rounded-full"
       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
     >
-      <Text className={`text-xl ${isBookmarked ? "text-blue-600" : "text-gray-400"}`}>
-        {isBookmarked ? '★' : '☆'}
-      </Text>
+      <Ionicons
+        name={bookmarked ? 'bookmark' : 'bookmark-outline'}
+        size={24}
+        color={bookmarked ? '#2563eb' : '#6b7280'}
+      />
     </TouchableOpacity>
   );
 };

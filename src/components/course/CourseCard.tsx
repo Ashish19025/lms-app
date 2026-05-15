@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity} from 'react-native';
 import { Course } from '../../types/course.types';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
+import { BookmarkButton } from './BookmarkButton';
 
 // We'll update this component later to include actual Bookmark storage functionality.
 interface CourseCardProps {
@@ -23,7 +24,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
       onPress={handlePress}
     >
       <Image
-  source={{ uri: course.images?.[0] || course.thumbnail?.[0] || 'https://via.placeholder.com/400x200?text=No+Image' }}
+  source={{ uri: course.images?.[0] || course.thumbnail || 'https://via.placeholder.com/400x200?text=No+Image' }}
   contentFit="cover"
   transition={300}
   cachePolicy="memory-disk"
@@ -33,10 +34,9 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
       <View className="p-4">
         <View className="flex-row items-center justify-between mb-2">
           <Text className="text-xs font-semibold text-blue-600 uppercase">{course.category}</Text>
-          <TouchableOpacity className="p-1">
-            {/* Bookmark placeholder */}
-            <Text className="text-gray-400">☆</Text>
-          </TouchableOpacity>
+          <View className="-my-2 -mr-2">
+            <BookmarkButton courseId={course.id} />
+          </View>
         </View>
 
         <Text className="text-lg font-bold text-gray-900 mb-1" numberOfLines={2}>
@@ -50,8 +50,8 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
         <View className="flex-row items-center justify-between mt-auto">
           {course.instructor && (
             <View className="flex-row items-center">
-              <Image 
-                source={{ uri: course.instructor.picture.thumbnail }} 
+              <Image
+                source={{ uri: course.instructor?.picture?.thumbnail || 'https://via.placeholder.com/150' }}
                 className="h-6 w-6 rounded-full bg-gray-300 mr-2"
               />
               <Text className="text-sm text-gray-700 font-medium">

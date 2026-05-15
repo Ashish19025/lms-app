@@ -24,9 +24,16 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const token = await getToken();
       if (token) {
-        // Here we could ideally fetch the current user profile from the API
-        // For now, we are just marking as initialized
-        // set({ user: ... });
+        // Here we ideally fetch the current user profile from the API 
+        // We'll generate a mock user object for the UI to satisfy the Auth guard
+        set({ 
+          user: {
+            _id: 'restored-session',
+            username: 'Student',
+            email: 'user@example.com',
+            avatar: 'https://via.placeholder.com/150'
+          }
+        });
       }
     } catch (e) {
       console.error(e);
@@ -54,8 +61,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const data = await register(credentials);
-      // Depending on API, register might auto-login or not. Let's assume it doesn't return accessToken but we'll adapt.
-      set({ isLoading: false });
+      // Automatically log the user in if the API returns an access token
+      if (data && data.accessToken) {
+        await saveToken(data.accessToken);
+        set({ user: data.user, isLoading: false });
+      } else {
+        set({ isLoading: false });
+      }
     } catch (error: any) {
       set({ 
         error: error.response?.data?.message || 'Registration failed.',
