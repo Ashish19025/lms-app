@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { View, Text, TouchableOpacity} from 'react-native';
 import { Course } from '../../types/course.types';
 import { useRouter } from 'expo-router';
+import { Image } from 'expo-image';
 
 // We'll update this component later to include actual Bookmark storage functionality.
 interface CourseCardProps {
@@ -21,11 +22,13 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
       activeOpacity={0.7}
       onPress={handlePress}
     >
-      <Image 
-        source={{ uri: course.thumbnail }} 
-        className="h-40 w-full bg-gray-200"
-        resizeMode="cover"
-      />
+      <Image
+  source={{ uri: course.images?.[0] || course.thumbnail?.[0] || 'https://via.placeholder.com/400x200?text=No+Image' }}
+  contentFit="cover"
+  transition={300}
+  cachePolicy="memory-disk"
+  className="h-40 w-full rounded-t-xl"
+/>
       
       <View className="p-4">
         <View className="flex-row items-center justify-between mb-2">

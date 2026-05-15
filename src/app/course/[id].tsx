@@ -12,6 +12,7 @@ export default function CourseDetailsScreen() {
   const getCourseById = useCourseStore(state => state.getCourseById);
   const [course, setCourse] = useState<Course | undefined>(undefined);
 
+  console.log('Course ID from params:', course);
   useEffect(() => {
     if (id) {
       setCourse(getCourseById(Number(id)));
@@ -30,13 +31,23 @@ export default function CourseDetailsScreen() {
   return (
     <View className="flex-1 bg-gray-50">
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-        <Image 
-          source={{ uri: course.images[0] || course.thumbnail }} 
-          className="w-full h-64 bg-gray-200"
-          resizeMode="cover"
-        />
-        
-        <View className="p-5 bg-white mb-2 shadow-sm rounded-b-3xl border-b border-gray-100">
+        {course.images && course.images.length > 0 ? (
+          <Image
+            source={{ uri: course.images[0] }}
+            className="w-full h-64 bg-gray-200"
+            resizeMode="cover"
+          />
+        ) : course.thumbnail ? (
+          <Image
+            source={{ uri: course.thumbnail }}
+            className="w-full h-64 bg-gray-200"
+            resizeMode="cover"
+          />
+        ) : (
+          <View className="w-full h-64 bg-gray-300 items-center justify-center">
+            <Text className="text-gray-500">No image available</Text>
+          </View>
+        )}<View className="p-5 bg-white mb-2 shadow-sm rounded-b-3xl border-b border-gray-100">
           <View className="flex-row justify-between items-center mb-3">
             <View className="bg-blue-100 px-3 py-1 rounded-full">
               <Text className="text-blue-700 font-semibold text-xs uppercase tracking-wide">{course.category}</Text>
@@ -86,17 +97,18 @@ export default function CourseDetailsScreen() {
 
       {/* Floating Action Bar */}
       <View className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 flex-row items-center justify-between">
-        <View className="flex-col">
+        <View className="flex-col w-1/3">
           <Text className="text-xs text-gray-500 uppercase font-semibold">Price</Text>
-          <Text className="text-2xl font-bold text-gray-900">${(course.price - (course.price * course.discountPercentage / 100)).toFixed(2)}</Text>
-          <Text className="text-xs text-gray-400 line-through">${course.price.toFixed(2)}</Text>
+          <Text className="text-2xl font-bold text-gray-900">₹{(course.price - (course.price * course.discountPercentage / 100)).toFixed(2)}</Text>
+          <Text className="text-xs text-gray-400 line-through">₹{course.price.toFixed(2)}</Text>
         </View>
         
-        <Button 
-          title="Enroll Now" 
-          className="flex-1 ml-6" 
-          onPress={() => router.push(`/webview/${course.id}`)} 
-        />
+        <View className="flex-1 ml-4 shadow-sm">
+          <Button 
+            title="Enroll Now" 
+            onPress={() => router.push(`/webview/${course.id}`)} 
+          />
+        </View>
       </View>
     </View>
   );

@@ -39,6 +39,7 @@ export const useCourseStore = create<CourseState>((set, get) => ({
             filteredCourses: combined,
             isLoading: false 
       });
+      console.log(coursesData.slice(0, 10));
     } catch (error: any) {
       set({ 
         error: error.message || 'Failed to fetch courses', 
@@ -56,11 +57,16 @@ export const useCourseStore = create<CourseState>((set, get) => ({
       return;
     }
 
-    const filtered = courses.filter(
-      (course) => 
-        course.title.toLowerCase().includes(lowerQuery) || 
-        (course.instructor && `${course.instructor.name.first} ${course.instructor.name.last}`.toLowerCase().includes(lowerQuery))
-    );
+      const filtered = courses.filter((course) => {
+        const inTitle = course.title.toLowerCase().includes(lowerQuery);
+        const inBrand = course.brand?.toLowerCase().includes(lowerQuery);
+        const inInstructor = !!course.instructor &&
+          `${course.instructor.name.first} ${course.instructor.name.last}`
+            .toLowerCase()
+            .includes(lowerQuery);
+
+        return inTitle || inBrand || inInstructor;
+      });
 
     set({ searchQuery: query, filteredCourses: filtered });
   },

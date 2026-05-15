@@ -9,6 +9,7 @@ export function useCourses() {
     if (courses.length === 0 && !isLoading) {
       loadCourses();
     }
+    console.log('Courses in store:', courses);
   }, []);
 
   return {
