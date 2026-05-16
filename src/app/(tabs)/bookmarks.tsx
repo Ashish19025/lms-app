@@ -9,10 +9,15 @@ import { useBookmarks } from '../../hooks/useBookmarks';
 import { BookmarksEmptyState } from '../../components/bookmarks/BookmarksEmptyState';
 import { BookmarksStatsCard } from '../../components/bookmarks/BookmarksStatsCard';
 
+/* BookmarksScreen component displays the list of courses that the user has bookmarked.
+  It retrieves the list of all courses from the course store and the list of bookmarked course IDs from the bookmarks hook.
+*/
 export default function BookmarksScreen() {
+  // Get the list of all courses from the course store
   const courses = useCourseStore((state) => state.courses);
+  // Get the list of bookmarked course IDs from the bookmarks hook
   const { bookmarkedIds } = useBookmarks();
-
+  // Filter the courses to only include those that are bookmarked by the user
   const bookmarkedCourses = courses.filter(course => bookmarkedIds.includes(course.id));
 
   return (

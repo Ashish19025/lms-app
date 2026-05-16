@@ -2,6 +2,10 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+
+/* NotificationsEmptyState - A component to display when there are no notifications to show
+   This component provides a user-friendly message and icon to indicate that the user has no notifications at the moment.
+*/
 export function NotificationsEmptyState() {
   return (
     <View className="flex-1 items-center justify-center px-8 mt-32">

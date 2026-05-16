@@ -2,8 +2,14 @@ import { create } from 'zustand';
 import { storeData, getData } from '../services/storage/asyncStorage';
 import { NotificationItem } from '../components/notifications/NotificationCard';
 
+// Key used to store notifications in async storage, ensuring that the notification data is persisted across app sessions and can be retrieved when the user returns to the app
 const NOTIFICATIONS_KEY = '@app_notifications';
 
+/**
+ * NotificationState - Defines the shape of the notification state and actions for managing user notifications, 
+ * including initializing notifications from storage, 
+ * adding new notifications, marking notifications as read, and clearing all notifications.
+ */
 interface NotificationState {
   notifications: NotificationItem[];
   initializeNotifications: () => Promise<void>;
@@ -13,9 +19,16 @@ interface NotificationState {
   clearAll: () => Promise<void>;
 }
 
+/** useNotificationStore - A Zustand store for managing user notifications,
+ *  providing actions to initialize, add, mark as read, and clear notifications, 
+ * with persistence using async storage to ensure that notification data is retained across app sessions. 
+ **/
 export const useNotificationStore = create<NotificationState>((set, get) => ({
   notifications: [],
 
+  /** Function to initialize notifications from async storage, allowing the app to load any previously stored notifications when it starts up, 
+   * ensuring that users can see their past notifications even after closing and reopening the app. 
+   **/  
   initializeNotifications: async () => {
     try {
       const data = await getData(NOTIFICATIONS_KEY);
@@ -27,6 +40,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     }
   },
 
+  /** Function to add a new notification, which creates a new notification item with a unique ID, timestamp, and read status,
+   *  adds it to the existing notifications in the store, and persists the updated notifications list to async storage to ensure that the new notification is retained across app sessions. 
+   **/
   addNotification: async (notification) => {
     const newNotification: NotificationItem = {
       ...notification,
@@ -45,6 +61,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     }
   },
 
+  /** Function to mark a specific notification as read, 
+   * which updates the read status of the notification with the given ID in the store and
+   * persists the updated notifications list to async storage to ensure that the read status is retained across app sessions.
+   **/
   markAsRead: async (id: string) => {
     const newNotifications = get().notifications.map((n) => 
       n.id === id ? { ...n, read: true } : n
@@ -59,6 +79,10 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     }
   },
 
+  /** Function to mark all notifications as read, 
+   * which updates the read status of all notifications in the store to true and 
+   * persists the updated notifications list to async storage to ensure that the read status of all notifications is retained across app sessions. 
+   **/
   markAllAsRead: async () => {
     const newNotifications = get().notifications.map((n) => ({ ...n, read: true }));
     set({ notifications: newNotifications });
@@ -70,6 +94,9 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     }
   },
 
+  /** Function to clear all notifications, which removes all notifications from the store and 
+   * persists the empty notifications list to async storage to ensure that all notifications are cleared across app sessions. 
+   **/
   clearAll: async () => {
     set({ notifications: [] });
     try {

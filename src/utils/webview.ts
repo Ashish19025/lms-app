@@ -1,3 +1,8 @@
+/**
+ * getCourseWebviewHtml - A function that generates HTML content for displaying course details in a webview, including the course title and description. 
+ * The generated HTML includes styling for a clean and modern look, and also includes a script to notify the React Native app when the content has loaded.
+ * This allows for a seamless integration of web content within the mobile app, providing users with a rich and interactive experience when viewing course details.
+ */
 export const getCourseWebviewHtml = (title: string, description: string) => `
 <!DOCTYPE html>
 <html>

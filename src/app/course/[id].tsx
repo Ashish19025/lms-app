@@ -8,14 +8,25 @@ import { Button } from '../../components/ui/Button';
 import { BookmarkButton } from '../../components/course/BookmarkButton';
 import { Ionicons } from '@expo/vector-icons';
 
+
+/** * CourseDetailsScreen - Displays detailed information about a specific course, including title, description, instructor, and enrollment options.
+ * Fetches course data based on the provided course ID and allows users to enroll in the course via a WebView.
+ */
 export default function CourseDetailsScreen() {
+  // Extract course ID from the URL parameters and get router instance for navigation
   const { id } = useLocalSearchParams();
+  // Get function to fetch course data from the course store
   const router = useRouter();
+  // Local state to manage course data and loading state
   const getOrFetchCourse = useCourseStore(state => state.getOrFetchCourse);
+  // Local state to hold the course data and loading status
   const [course, setCourse] = useState<Course | undefined>(undefined);
+  // Local state to manage loading status while fetching course data
   const [isLoading, setIsLoading] = useState(true);
+  // Get safe area insets for proper spacing on devices with notches or home indicators
   const insets = useSafeAreaInsets();
 
+  // Fetch course data when the component mounts or when the course ID changes
   useEffect(() => {
     const loadCourse = async () => {
       if (id) {
@@ -28,6 +39,7 @@ export default function CourseDetailsScreen() {
     loadCourse();
   }, [id]);
 
+  // Show loading state while fetching course data
   if (isLoading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-white">
@@ -36,6 +48,7 @@ export default function CourseDetailsScreen() {
     );
   }
 
+  // Show error state if course data could not be fetched
   if (!course) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-white">    
@@ -47,6 +60,7 @@ export default function CourseDetailsScreen() {
 
   return (
     <View className="flex-1 bg-gray-50">
+      {/* Back button to navigate to the previous screen */}
       <TouchableOpacity
         onPress={() => router.back()}
         style={{ top: insets.top + 16, left: 16, zIndex: 50, position: 'absolute' }}
@@ -54,7 +68,7 @@ export default function CourseDetailsScreen() {
       >
         <Ionicons name="arrow-back" size={24} color="#1f2937" />
       </TouchableOpacity>
-      
+      {/* Scrollable content area for course details */}
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         {course.images && course.images.length > 0 ? (
           <Image
@@ -73,7 +87,7 @@ export default function CourseDetailsScreen() {
             <Text className="text-gray-500">No image available</Text>
           </View>
         )}
-        
+        {/* Course information section with title, category, instructor, and description */}
         <View className="p-5 bg-white mb-2 shadow-sm rounded-b-3xl border-b border-gray-100">
           <View className="flex-row justify-between items-center mb-3">
             <View className="bg-blue-100 px-3 py-1 rounded-full">
@@ -88,8 +102,9 @@ export default function CourseDetailsScreen() {
             </View>
           </View>
           
+          {/* Course title and instructor information */}
           <Text className="text-2xl font-extrabold text-gray-900 mb-2">{course.title}</Text>
-          
+          {/* Instructor information section with profile picture and name */}
           {course.instructor && (
             <View className="flex-row items-center mt-3 bg-gray-50 p-3 rounded-lg">
               <Image
@@ -106,6 +121,7 @@ export default function CourseDetailsScreen() {
           )}
         </View>
         
+        {/* Course description and details section */}
         <View className="p-5">
            <Text className="text-lg font-bold text-gray-900 mb-2">About this course</Text>
            <Text className="text-base text-gray-600 leading-6">{course.description}</Text>
@@ -122,7 +138,6 @@ export default function CourseDetailsScreen() {
              </View>
            </View>
         </View>
-
       </ScrollView>
 
       {/* Floating Action Bar */}
@@ -132,7 +147,7 @@ export default function CourseDetailsScreen() {
           <Text className="text-2xl font-bold text-gray-900">₹{(course.price - (course.price * course.discountPercentage / 100)).toFixed(2)}</Text>
           <Text className="text-xs text-gray-400 line-through">₹{course.price.toFixed(2)}</Text>
         </View>
-        
+        {/* Enroll button that navigates to a WebView for course enrollment */}
         <View className="flex-1 ml-4 shadow-sm">
           <Button 
             title="Enroll Now" 

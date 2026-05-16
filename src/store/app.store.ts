@@ -4,14 +4,22 @@ import { scheduleBookmarkMilestoneNotification , BookmarkNotification} from '../
 import { useNotificationStore } from './notification.store';
 import { useCourseStore } from './course.store';
 
+
+// Key used to store the list of bookmarked course IDs in async storage, allowing the app to persist the user's bookmarked courses across sessions and provide a personalized experience when they return to the app
 const BOOKMARKS_KEY = '@bookmarked_courses';
 
+/**
+ * AppState - Manages global application state related to bookmarked courses, including initialization and toggling of bookmarks.
+ */
 interface AppState {
   bookmarkedIds: number[];
   initializeBookmarks: () => Promise<void>;
   toggleBookmark: (id: number) => Promise<void>;
 }
 
+/**
+ * useAppStore - A Zustand store that manages the state of bookmarked courses, allowing users to bookmark and unbookmark courses while persisting this information across app sessions using async storage.
+ */
 export const useAppStore = create<AppState>((set, get) => ({
   bookmarkedIds: [],
   

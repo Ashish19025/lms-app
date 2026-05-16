@@ -1,3 +1,7 @@
+/**
+ * withRetry - A utility function that wraps an asynchronous function with retry logic, allowing it to be retried a specified number of times with an exponential backoff delay between attempts. 
+ * This is useful for handling transient errors, such as network issues, by giving the function multiple chances to succeed before ultimately throwing an error if all retries fail.
+ */
 export const withRetry = async <T>(
   fn: () => Promise<T>,
   retries: number = 3,

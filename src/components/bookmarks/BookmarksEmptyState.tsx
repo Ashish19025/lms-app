@@ -4,10 +4,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
 export function BookmarksEmptyState() {
+  // Get the router instance to navigate to the home screen when the button is pressed
   const router = useRouter();
   
   return (
     <View className="flex-1 items-center justify-center px-8 mt-32">
+      {/* Icon representing an empty bookmark state */}
       <View className="w-24 h-24 rounded-full bg-blue-100 items-center justify-center mb-6">
         <Ionicons
           name="bookmark-outline"

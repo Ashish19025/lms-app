@@ -13,6 +13,7 @@ export default function WebViewScreen() {
   const course = getCourseById(Number(id));
   
   const [token, setToken] = useState<string>('');
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     // Fetch user token to pass via WebView headers
@@ -111,16 +112,24 @@ export default function WebViewScreen() {
         <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Classroom</Text>
       </View>
 
-      <WebView 
-        source={{ 
-          html: htmlContent,
-          // Passing Auth via headers for secure backend HTML/content rendering scenarios
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'X-Custom-Client': 'LMSMobileApp'
-          }
-        }}
-        onMessage={(event) => {
+      {loadError ? (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ color: '#6b7280', fontSize: 16, marginBottom: 12 }}>{loadError}</Text>
+          <TouchableOpacity onPress={() => { setLoadError(null); }} style={{ backgroundColor: '#2563EB', padding: 12, borderRadius: 8 }}>
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <WebView 
+          source={{ 
+            html: htmlContent,
+            // Passing Auth via headers for secure backend HTML/content rendering scenarios
+            headers: { 
+              'Authorization': `Bearer ${token}`,
+              'X-Custom-Client': 'LMSMobileApp'
+            }
+          }}
+          onMessage={(event) => {
           try {
             const data = JSON.parse(event.nativeEvent.data);
             if (data.type === 'LESSON_COMPLETED') {
@@ -131,16 +140,22 @@ export default function WebViewScreen() {
           } catch (e) {
             console.error('Failed to parse webview message', e);
           }
-        }}
-        startInLoadingState={true}
-        renderLoading={() => (
-          <ActivityIndicator 
-            size="large" 
-            color="#2563EB" 
-            style={{ position: 'absolute', top: '50%', left: '50%', transform: [{ translateX: -15 }, { translateY: -15 }] }} 
-          />
-        )}
-      />
+          }}
+          onError={(syntheticEvent) => {
+            const nativeEvent = syntheticEvent.nativeEvent;
+            console.error('WebView error: ', nativeEvent);
+            setLoadError('Failed to load content. Please check your connection.');
+          }}
+          startInLoadingState={true}
+          renderLoading={() => (
+            <ActivityIndicator 
+              size="large" 
+              color="#2563EB" 
+              style={{ position: 'absolute', top: '50%', left: '50%', transform: [{ translateX: -15 }, { translateY: -15 }] }} 
+            />
+          )}
+        />
+      )}
     </SafeAreaView>
   );
 }

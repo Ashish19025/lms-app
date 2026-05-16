@@ -7,10 +7,16 @@ import { useNotificationStore } from '../../store/notification.store';
 import { NotificationsEmptyState } from '../../components/notifications/NotificationsEmptyState';
 import { NotificationCard, NotificationItem } from '../../components/notifications/NotificationCard';
 
+/**
+ * NotificationsScreen - Displays a list of user notifications with options to mark as read.
+ */
 export default function NotificationsScreen() {
+  // Extract notifications and related actions from the notification store
   const { notifications, initializeNotifications, markAllAsRead, markAsRead } = useNotificationStore();
+  // Calculate the count of unread notifications
   const unreadCount = notifications.filter((item) => !item.read).length;
 
+  // Initialize notifications when the component mounts
   useEffect(() => {
     initializeNotifications();
   }, []);
@@ -25,7 +31,7 @@ export default function NotificationsScreen() {
               Notifications
             </Text>
             <Text className="text-sm text-gray-500 mt-1">
-              Stay updated with your learning activity
+              Stay with your learning activity
             </Text>
           </View>
 

@@ -3,12 +3,17 @@ import { TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useBookmarks } from '../../hooks/useBookmarks';
 
+
 interface BookmarkButtonProps {
+  // courseId - The ID of the course to toggle bookmark status for
   courseId: number;
 }
 
+// BookmarkButton - A button component to toggle bookmark status for a course
 export const BookmarkButton: React.FC<BookmarkButtonProps> = ({ courseId }) => {
+  // Extract bookmark status and toggle function from the useBookmarks hook
   const { isBookmarked, toggleBookmark } = useBookmarks();
+  // Determine if the current course is bookmarked
   const bookmarked = isBookmarked(courseId);
 
   return (

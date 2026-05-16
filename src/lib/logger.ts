@@ -1,3 +1,4 @@
+// Logger utility for consistent logging across the application, with different log levels (info, warn, error)
 export const logger = {
   info: (message: string, ...args: any[]) => {
     if (__DEV__) {

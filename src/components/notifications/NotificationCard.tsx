@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+// Types of notification items to be displayed in the notification list
 export interface NotificationItem {
   id: string;
   title: string;
@@ -11,10 +12,12 @@ export interface NotificationItem {
   type: 'bookmark' | 'course' | 'reminder' | 'system';
 }
 
+// Props for the NotificationCard component, which displays individual notification details
 interface Props {
   item: NotificationItem;
 }
 
+// Helper function to determine the appropriate icon based on the notification type
 const getNotificationIcon = (type: NotificationItem['type']) => {
   switch (type) {
     case 'bookmark': return 'bookmark';
@@ -25,6 +28,7 @@ const getNotificationIcon = (type: NotificationItem['type']) => {
   }
 };
 
+// Helper function to determine the background color based on the notification type
 const getNotificationColor = (type: NotificationItem['type']) => {
   switch (type) {
     case 'bookmark': return 'bg-yellow-400';
@@ -35,8 +39,11 @@ const getNotificationColor = (type: NotificationItem['type']) => {
   }
 };
 
-export function NotificationCard({ item, onPress }: Props & { onPress?: () => void }) {
+// NotificationCard - A card component to display individual notification details in the notification list
+export const NotificationCard = React.memo(function NotificationCard({ item, onPress }: Props & { onPress?: () => void }) {
+  // Parse the notification time and format it for display
   const date = new Date(item.time);
+  // Format the time to a more user-friendly format, showing date and time if valid, otherwise showing raw time string
   const formattedTime = isNaN(date.getTime()) 
     ? item.time 
     : date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -47,8 +54,9 @@ export function NotificationCard({ item, onPress }: Props & { onPress?: () => vo
       onPress={onPress}
       className={`mb-4 rounded-3xl p-5 shadow-sm border ${
         item.read ? 'bg-white border-gray-100' : 'bg-blue-50 border-blue-100'
-      }`}
+      }`} // Apply different background and border colors based on read status
     >
+      {/* Notification content layout with icon, title, message, and time */}
       <View className="flex-row">
         <View
           className={`w-14 h-14 rounded-2xl items-center justify-center ${getNotificationColor(item.type)}`}
@@ -79,4 +87,4 @@ export function NotificationCard({ item, onPress }: Props & { onPress?: () => vo
       </View>
     </TouchableOpacity>
   );
-}
+});

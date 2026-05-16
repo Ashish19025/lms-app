@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 export default function TabsLayout() {
   return (
     <Tabs screenOptions={{ headerShown: false }}>
+      {/* Define the tabs for Home, Bookmarks, Profile, and Notifications with appropriate icons */}
       <Tabs.Screen
         name="home"
         options={{

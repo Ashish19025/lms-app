@@ -3,7 +3,10 @@ import { useAuthStore } from '../store/auth.store';
 import { View, ActivityIndicator } from 'react-native';
 import { login } from '../services/api/auth.api';
 
+/** Index - The main entry point for the application. It handles the initial redirection based on authentication status.
+ */
 export default function Index() {
+  // Extract authentication state and initialization function from the auth store
   const { isInitialized, user } = useAuthStore();
 
   if (!isInitialized) {

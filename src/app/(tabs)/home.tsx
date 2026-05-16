@@ -10,11 +10,15 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen() {
+  // Extract user information from the auth store
   const { user } = useAuthStore();
+  // Extract course-related state and actions from the course store
   const { filteredCourses, isLoading, loadCourses, searchQuery, setSearchQuery } = useCourseStore();
+  // Extract notifications from the notification store
   const { notifications } = useNotificationStore();
+  // Get router instance for navigation
   const router = useRouter();
-  
+  // Calculate the count of unread notifications
   const unreadCount = notifications.filter(n => !n.read).length;
 
   // Animation values
@@ -24,7 +28,6 @@ export default function HomeScreen() {
 
   useEffect(() => {
     loadCourses();
-
     // Sequence for entrance animation
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -59,6 +62,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }}>
+      {/* Animated header with welcome message and search bar */}
       <Animated.View 
         style={{ 
           opacity: fadeAnim, 
@@ -107,6 +111,7 @@ export default function HomeScreen() {
         </View>
       </Animated.View>
 
+      {/* Course list with pull-to-refresh functionality */}
       <CourseList 
         courses={filteredCourses}
         isLoading={isLoading}
