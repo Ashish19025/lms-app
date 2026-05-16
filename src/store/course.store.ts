@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { Course, Instructor } from '../types/course.types';
-import { fetchCourses, fetchInstructors } from '../services/api/course.api';
+import { Course } from '../types/course.types';
+import { fetchCourses, fetchCourseById } from '../services/api/course.api';
 
 interface CourseState {
   courses: Course[];
@@ -11,6 +11,7 @@ interface CourseState {
   loadCourses: () => Promise<void>;
   setSearchQuery: (query: string) => void;
   getCourseById: (id: number) => Course | undefined;
+  getOrFetchCourse: (id: number) => Promise<Course | undefined>;
 }
 
 export const useCourseStore = create<CourseState>((set, get) => ({
@@ -23,27 +24,17 @@ export const useCourseStore = create<CourseState>((set, get) => ({
   loadCourses: async () => {
     set({ isLoading: true, error: null });
     try {
-      // Fetch both courses and dummy instructors in parallel
-      const [coursesData, instructorsData] = await Promise.all([
-        fetchCourses(1, 20),
-        fetchInstructors(1, 20)
-      ]);
+      const coursesData = await fetchCourses(1, 20);
 
-      // Artificially map instructors to courses by index
-      const combined = coursesData.map((course, index) => ({
-        ...course,
-        instructor: instructorsData[index % instructorsData.length]
-      }));
-
-      set({ courses: combined,
-            filteredCourses: combined,
-            isLoading: false 
-      });
-      console.log(coursesData.slice(0, 10));
-    } catch (error: any) {
       set({ 
-        error: error.message || 'Failed to fetch courses', 
-        isLoading: false 
+        courses: coursesData,
+        filteredCourses: coursesData,
+        isLoading: false
+      });
+    } catch (error: any) {
+      set({
+        error: error.message || 'Failed to fetch courses',
+        isLoading: false
       });
     }
   },
@@ -51,17 +42,17 @@ export const useCourseStore = create<CourseState>((set, get) => ({
   setSearchQuery: (query: string) => {
     const { courses } = get();
     const lowerQuery = query.toLowerCase();
-    
+
     if (!query.trim()) {
       set({ searchQuery: query, filteredCourses: courses });
       return;
     }
 
       const filtered = courses.filter((course) => {
-        const inTitle = course.title.toLowerCase().includes(lowerQuery);
-        const inBrand = course.brand?.toLowerCase().includes(lowerQuery);
+        const inTitle = course.title.toLowerCase().includes(lowerQuery);        
+        const inBrand = course.brand?.toLowerCase().includes(lowerQuery);       
         const inInstructor = !!course.instructor &&
-          `${course.instructor.name.first} ${course.instructor.name.last}`
+          `${course.instructor.name.first} ${course.instructor.name.last}`      
             .toLowerCase()
             .includes(lowerQuery);
 
@@ -73,5 +64,25 @@ export const useCourseStore = create<CourseState>((set, get) => ({
 
   getCourseById: (id: number) => {
     return get().courses.find(c => c.id === id);
+  },
+
+  getOrFetchCourse: async (id: number) => {
+    // 1. Check cache first
+    const existing = get().courses.find(c => c.id === id);
+    if (existing) return existing;
+
+    // 2. Fetch from API if not in cache
+    try {
+      const fetchedCourse = await fetchCourseById(id);
+      
+      set(state => ({
+        courses: [...state.courses, fetchedCourse]
+      }));
+      
+      return fetchedCourse;
+    } catch (error) {
+      console.error('Failed to fetch individual course:', error);
+      return undefined;
+    }
   }
 }));

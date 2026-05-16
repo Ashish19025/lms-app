@@ -2,27 +2,43 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Image, TouchableOpacity } from 'react-native'; 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCourseStore } from '../../store/course.store';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Course } from '../../types/course.types';
 import { Button } from '../../components/ui/Button';
 import { BookmarkButton } from '../../components/course/BookmarkButton';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function CourseDetailsScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const getCourseById = useCourseStore(state => state.getCourseById);
+  const getOrFetchCourse = useCourseStore(state => state.getOrFetchCourse);
   const [course, setCourse] = useState<Course | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
+  const insets = useSafeAreaInsets();
 
-  console.log('Course ID from params:', course);
   useEffect(() => {
-    if (id) {
-      setCourse(getCourseById(Number(id)));
-    }
+    const loadCourse = async () => {
+      if (id) {
+        setIsLoading(true);
+        const fetched = await getOrFetchCourse(Number(id));
+        setCourse(fetched);
+        setIsLoading(false);
+      }
+    };
+    loadCourse();
   }, [id]);
+
+  if (isLoading) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-white">
+        <Text className="text-gray-500 text-lg">Loading course...</Text>
+      </SafeAreaView>
+    );
+  }
 
   if (!course) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-white">
+      <SafeAreaView className="flex-1 items-center justify-center bg-white">    
         <Text className="text-gray-500 text-lg">Course not found</Text>
         <Button title="Go Back" onPress={() => router.back()} className="mt-4 w-1/2" />
       </SafeAreaView>
@@ -31,6 +47,14 @@ export default function CourseDetailsScreen() {
 
   return (
     <View className="flex-1 bg-gray-50">
+      <TouchableOpacity
+        onPress={() => router.back()}
+        style={{ top: insets.top + 16, left: 16, zIndex: 50, position: 'absolute' }}
+        className="w-10 h-10 bg-white/80 rounded-full items-center justify-center shadow-lg"
+      >
+        <Ionicons name="arrow-back" size={24} color="#1f2937" />
+      </TouchableOpacity>
+      
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         {course.images && course.images.length > 0 ? (
           <Image
