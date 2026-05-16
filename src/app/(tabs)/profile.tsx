@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../hooks/useAuth';
 import { useBookmarks } from '../../hooks/useBookmarks';
 
@@ -38,7 +39,7 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <SafeAreaView className="flex-1 bg-white pt-14">
+    <SafeAreaView className="flex-1 bg-white ">
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 40 }}

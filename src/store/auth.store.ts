@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { User, LoginCredentials, RegisterCredentials } from '../types/auth.types';
 import { login, register } from '../services/api/auth.api';
-import { saveToken, removeToken, getToken } from '../services/storage/secureStorage';
+import { saveToken, removeToken, getToken, saveUser, removeUser, getUser } from '../services/storage/secureStorage';
 
 interface AuthState {
   user: User | null;
@@ -24,16 +24,20 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const token = await getToken();
       if (token) {
-        // Here we ideally fetch the current user profile from the API 
-        // We'll generate a mock user object for the UI to satisfy the Auth guard
-        set({ 
-          user: {
-            _id: 'restored-session',
-            username: 'Student',
-            email: 'user@example.com',
-            avatar: 'https://via.placeholder.com/150'
-          }
-        });
+        const user = await getUser();
+        if (user) {
+          set({ user });
+        } else {
+          // Fallback if token exists but user data doesn't
+          set({
+            user: {
+              _id: 'restored-session',
+              username: 'Student',
+              email: 'user@example.com',
+              avatar: 'https://via.placeholder.com/150'
+            }
+          });
+        }
       }
     } catch (e) {
       console.error(e);
@@ -47,6 +51,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const data = await login(credentials);
       await saveToken(data.accessToken);
+      await saveUser(data.user);
       set({ user: data.user, isLoading: false });
     } catch (error: any) {
       set({ 
@@ -64,23 +69,27 @@ export const useAuthStore = create<AuthState>((set) => ({
       // Automatically log the user in if the API returns an access token
       if (data && data.accessToken) {
         await saveToken(data.accessToken);
+        await saveUser(data.user);
         set({ user: data.user, isLoading: false });
       } else {
-        set({ isLoading: false });
+        // Fallback: Authenticate via login since register doesn't return tokens
+        const loginData = await login(credentials);
+        await saveToken(loginData.accessToken);
+        await saveUser(loginData.user);
+        set({ user: loginData.user, isLoading: false });
       }
     } catch (error: any) {
-      set({ 
+      set({
         error: error.response?.data?.message || 'Registration failed.',
-        isLoading: false 
+        isLoading: false
       });
       throw error;
     }
-  },
-
-  signOut: async () => {
+  },  signOut: async () => {
     set({ isLoading: true });
     try {
       await removeToken();
+      await removeUser();
       set({ user: null });
     } finally {
       set({ isLoading: false });

@@ -11,9 +11,9 @@ export function ProfileHeader({ user }: Props) {
       <View className="items-center">
         <Image
           source={{
-            uri: user?.avatar || 'https://i.pravatar.cc/300',
+            uri: typeof user?.avatar === 'string' ? user.avatar : (user?.avatar?.url || 'https://i.pravatar.cc/300'),
           }}
-          className="w-28 h-28 rounded-full border-4 border-blue-100"       
+          className="w-28 h-28 rounded-full border-4 border-blue-100"
         />
         <Text className="mt-4 text-2xl font-bold text-gray-900">
           {user?.username || 'Guest User'}
