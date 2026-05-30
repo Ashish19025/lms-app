@@ -25,7 +25,6 @@ The application was developed as part of a React Native Expo developer assessmen
 | Expo Notifications   | Local notifications                   |
 | React Native WebView | Embedded course content               |
 | Expo Image           | Optimized image rendering and caching |
-| NetInfo              | Network monitoring                    |
 
 ---
 
