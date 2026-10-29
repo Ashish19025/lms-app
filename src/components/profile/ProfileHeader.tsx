@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Image, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuthStore } from '../../store/auth.store';
 import { Ionicons } from '@expo/vector-icons';
+import { uploadAvatar } from '../../services/api/auth.api';
 
 interface Props {
   // user - The user data to display in the profile header, including avatar, username, and email
@@ -50,9 +51,17 @@ export function ProfileHeader({ user }: Props) {
         setIsUploading(true);
         const newAvatarUri = result.assets[0].uri;
         
-        // In a real app we'd upload to backend first, but we simulate it here by saving purely locally
-        updateUser({ avatar: newAvatarUri });
-        setIsUploading(false);
+        try {
+          // Upload to the backend and keep the URL it returns
+          const updated = await uploadAvatar(newAvatarUri);
+          await updateUser({ avatar: updated?.avatar ?? newAvatarUri });
+        } catch {
+          // Server unreachable: keep the picked photo on this device
+          await updateUser({ avatar: newAvatarUri });
+          Alert.alert('Saved locally', 'Could not upload your photo. It will show on this device only.');
+        } finally {
+          setIsUploading(false);
+        }
       }
     } catch (error) {
       console.error('Error picking image: ', error);
@@ -94,6 +103,7 @@ export function ProfileHeader({ user }: Props) {
         {/* Edit Profile button for future profile editing functionality, styled as a blue button with white text */}    
         <TouchableOpacity
           activeOpacity={0.8}
+          onPress={handlePickImage}
           className="mt-5 px-5 py-3 bg-blue-600 rounded-2xl"
         >
           <Text className="text-white font-semibold">

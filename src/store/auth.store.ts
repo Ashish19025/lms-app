@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { User, LoginCredentials, RegisterCredentials } from '../types/auth.types';
-import { login, register } from '../services/api/auth.api';
-import { saveToken, removeToken, getToken, saveUser, removeUser, getUser, saveRefreshToken, getRefreshToken, removeRefreshToken } from '../services/storage/secureStorage';
+import { login, register, getCurrentUser } from '../services/api/auth.api';
+import { saveToken, removeToken, getToken, saveUser, removeUser, getUser, saveRefreshToken, removeRefreshToken } from '../services/storage/secureStorage';
 
 interface AuthState {
   user: User | null;
@@ -11,7 +11,7 @@ interface AuthState {
   signIn: (credentials: LoginCredentials) => Promise<void>;
   signUp: (credentials: RegisterCredentials) => Promise<void>;
   signOut: () => Promise<void>;
-  updateUser: (updates: Partial<User>) => void;
+  updateUser: (updates: Partial<User>) => Promise<void>;
   initialize: () => Promise<void>;
 }
 
@@ -25,23 +25,20 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const token = await getToken();
       if (token) {
-        const user = await getUser();
-        if (user) {
-          set({ user });
+        const savedUser = await getUser();
+        if (savedUser) {
+          set({ user: savedUser });
         } else {
-          // Fallback if token exists but user data doesn't
-          set({
-            user: {
-              _id: 'restored-session',
-              username: 'Student',
-              email: 'user@example.com',
-              avatar: 'https://via.placeholder.com/150'
-            }
-          });
+          // Token but no saved profile: ask the server who this is
+          const user = await getCurrentUser();
+          await saveUser(user);
+          set({ user });
         }
       }
     } catch (e) {
-      console.error(e);
+      // Session can't be restored (expired token, server unreachable without cache): log out cleanly
+      await Promise.all([removeToken(), removeUser(), removeRefreshToken()]);
+      set({ user: null });
     } finally {
       set({ isInitialized: true });
     }

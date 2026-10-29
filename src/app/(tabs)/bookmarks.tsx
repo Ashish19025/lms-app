@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CourseCard } from '../../components/course/CourseCard';
@@ -19,6 +19,13 @@ export default function BookmarksScreen() {
   const { bookmarkedIds } = useBookmarks();
   // Filter the courses to only include those that are bookmarked by the user
   const bookmarkedCourses = courses.filter(course => bookmarkedIds.includes(course.id));
+  const getOrFetchCourse = useCourseStore((state) => state.getOrFetchCourse);
+
+  // Bookmarks can point at courses outside the loaded pages: fetch those
+  useEffect(() => {
+    const loaded = new Set(courses.map((c) => c.id));
+    bookmarkedIds.filter((id) => !loaded.has(id)).forEach((id) => getOrFetchCourse(id));
+  }, [bookmarkedIds]);
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">

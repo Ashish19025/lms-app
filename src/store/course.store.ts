@@ -1,108 +1,144 @@
 import { create } from 'zustand';
 import { Course } from '../types/course.types';
 import { fetchCourses, fetchCourseById } from '../services/api/course.api';
+import { storeData, getData } from '../services/storage/asyncStorage';
 
-/**
- * Zustand store for managing course data in the LMS app, providing state management for courses, including loading state, error handling, search functionality, and caching of course data to optimize performance and user experience.
- * This store includes functions to load courses from the API, set search queries to filter courses based on title, brand, or instructor, and retrieve individual courses by ID with caching to minimize unnecessary API calls.
- */
+const PAGE_SIZE = 20;
+// Last successfully loaded first page, shown when the app opens offline
+const COURSES_CACHE_KEY = '@courses_cache';
+let searchTimer: ReturnType<typeof setTimeout> | null = null;
+
 interface CourseState {
   courses: Course[];
   filteredCourses: Course[];
   isLoading: boolean;
+  isLoadingMore: boolean;
   error: string | null;
   searchQuery: string;
+  page: number;
+  hasMore: boolean;
+  // True when the list on screen came from the offline cache
+  isFromCache: boolean;
   loadCourses: () => Promise<void>;
+  loadMoreCourses: () => Promise<void>;
   setSearchQuery: (query: string) => void;
   getCourseById: (id: number) => Course | undefined;
   getOrFetchCourse: (id: number) => Promise<Course | undefined>;
 }
 
-/** Zustand store for managing course data in the LMS app, providing state management for courses, including loading state, error handling, search functionality, and caching of course data to optimize performance and user experience.
- * This store includes functions to load courses from the API, set search queries to filter courses based on title, brand, or instructor, and retrieve individual courses by ID with caching to minimize unnecessary API calls.
- */
+// Search by title, brand, category or instructor name (case-insensitive)
+const filterCourses = (courses: Course[], query: string) => {
+  const q = query.trim().toLowerCase();
+  if (!q) return courses;
+  return courses.filter((course) => {
+    const instructor = course.instructor
+      ? `${course.instructor.name.first} ${course.instructor.name.last}`.toLowerCase()
+      : '';
+    return (
+      course.title.toLowerCase().includes(q) ||
+      !!course.brand?.toLowerCase().includes(q) ||
+      !!course.category?.toLowerCase().includes(q) ||
+      instructor.includes(q)
+    );
+  });
+};
+
+// Merge new courses in without duplicates (ids are unique)
+const mergeCourses = (existing: Course[], incoming: Course[]) => {
+  const ids = new Set(existing.map((c) => c.id));
+  return [...existing, ...incoming.filter((c) => !ids.has(c.id))];
+};
+
 export const useCourseStore = create<CourseState>((set, get) => ({
   courses: [],
   filteredCourses: [],
   isLoading: false,
+  isLoadingMore: false,
   error: null,
   searchQuery: '',
+  page: 1,
+  hasMore: true,
+  isFromCache: false,
 
-  // Function to load Courses from the API
+  // Load (or reload) the first page. Falls back to the cached list if the request fails.
   loadCourses: async () => {
-    // Set loading state to true and clear any existing errors before starting the API call to fetch courses
     set({ isLoading: true, error: null });
-    //
     try {
-      const coursesData = await fetchCourses(1, 20);
-
-      set({ 
-        courses: coursesData,
-        filteredCourses: coursesData,
-        isLoading: false
-      });
-    } catch (error: any) {
+      const { courses, hasMore } = await fetchCourses(1, PAGE_SIZE);
       set({
-        error: error.message || 'Failed to fetch courses',
-        isLoading: false
+        courses,
+        filteredCourses: filterCourses(courses, get().searchQuery),
+        page: 1,
+        hasMore,
+        isFromCache: false,
+        isLoading: false,
       });
+      storeData(COURSES_CACHE_KEY, courses);
+    } catch (error: any) {
+      const cached: Course[] | null = await getData(COURSES_CACHE_KEY);
+      if (cached?.length && get().courses.length === 0) {
+        set({
+          courses: cached,
+          filteredCourses: filterCourses(cached, get().searchQuery),
+          hasMore: false,
+          isFromCache: true,
+        });
+      }
+      set({ error: error.message || 'Failed to fetch courses', isLoading: false });
     }
   },
 
-  // Function to set the search query and filter courses based on the query, allowing users to easily find courses by title, brand, or instructor
+  // Infinite scroll: fetch the next page and append it
+  loadMoreCourses: async () => {
+    const { isLoading, isLoadingMore, hasMore, page, isFromCache } = get();
+    if (isLoading || isLoadingMore || !hasMore || isFromCache) return;
+    set({ isLoadingMore: true });
+    try {
+      const next = page + 1;
+      const { courses: incoming, hasMore: more } = await fetchCourses(next, PAGE_SIZE);
+      const courses = mergeCourses(get().courses, incoming);
+      set({
+        courses,
+        filteredCourses: filterCourses(courses, get().searchQuery),
+        page: next,
+        hasMore: more,
+        isLoadingMore: false,
+      });
+    } catch {
+      set({ isLoadingMore: false });
+    }
+  },
+
+  // Filter what's loaded right away, then ask the server for matches not loaded yet
   setSearchQuery: (query: string) => {
-    const { courses } = get();
-    const lowerQuery = query.toLowerCase();
-
-    /* If the search query is empty, reset the filtered courses to show all courses. Otherwise, 
-    filter the courses based on whether the title, brand, or instructor's name includes the search query (case-insensitive). 
-    This allows users to quickly find relevant courses by typing keywords related to the course title, brand, or instructor.
-    */
-    if (!query.trim()) {
-      set({ searchQuery: query, filteredCourses: courses });
-      return;
-    }
-
-      const filtered = courses.filter((course) => {
-        const inTitle = course.title.toLowerCase().includes(lowerQuery);        
-        const inBrand = course.brand?.toLowerCase().includes(lowerQuery);       
-        const inInstructor = !!course.instructor &&
-          `${course.instructor.name.first} ${course.instructor.name.last}`      
-            .toLowerCase()
-            .includes(lowerQuery);
-
-        return inTitle || inBrand || inInstructor;
-      });
-
-    set({ searchQuery: query, filteredCourses: filtered });
+    set({ searchQuery: query, filteredCourses: filterCourses(get().courses, query) });
+    if (searchTimer) clearTimeout(searchTimer);
+    const q = query.trim();
+    if (q.length < 2) return;
+    searchTimer = setTimeout(async () => {
+      try {
+        const { courses: found } = await fetchCourses(1, 50, q);
+        if (get().searchQuery.trim() !== q) return; // user kept typing
+        const courses = mergeCourses(get().courses, found);
+        set({ courses, filteredCourses: filterCourses(courses, get().searchQuery) });
+      } catch {
+        // Offline or server error: the local results are already showing
+      }
+    }, 400);
   },
 
-  // Function to retrieve a course by its ID from the cached courses in the store, allowing for quick access to course details without needing to make an API call if the course data is already available
-  getCourseById: (id: number) => {
-    return get().courses.find(c => c.id === id);
-  },
+  getCourseById: (id: number) => get().courses.find((c) => c.id === id),
 
-  /* Function to retrieve a course by its ID, first checking the cache in the store for the course data. 
-  If the course is not found in the cache, it makes an API call to fetch the course details by ID and then updates the store with the newly fetched course data. 
-  This approach optimizes performance by minimizing unnecessary API calls and providing quick access to course details when they are already available in the cache.
-  */
+  // Use the in-memory course if we have it, otherwise fetch it and keep it
   getOrFetchCourse: async (id: number) => {
-    // 1. Check cache first
-    const existing = get().courses.find(c => c.id === id);
+    const existing = get().courses.find((c) => c.id === id);
     if (existing) return existing;
-
-    // 2. Fetch from API if not in cache
     try {
       const fetchedCourse = await fetchCourseById(id);
-      
-      set(state => ({
-        courses: [...state.courses, fetchedCourse]
-      }));
-      
+      set((state) => ({ courses: mergeCourses(state.courses, [fetchedCourse]) }));
       return fetchedCourse;
-    } catch (error) {
-      console.error('Failed to fetch individual course:', error);
+    } catch {
       return undefined;
     }
-  }
+  },
 }));

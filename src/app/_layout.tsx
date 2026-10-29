@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'react';
 import { AppState, AppStateStatus, View, Text } from 'react-native';
 import { useAuthStore } from '../store/auth.store';
 import { useNotificationStore } from '../store/notification.store';
+import { useBookmarkStore } from '../store/bookmark.store';
+import { useProgressStore } from '../store/progress.store';
 import { requestNotificationPermissions, scheduleInactivityReminder } from '../services/notifications/notification.service';
 import NetInfo from '@react-native-community/netinfo';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -35,6 +37,9 @@ export default function RootLayout() {
     
     // Initialize notifications data
     useNotificationStore.getState().initializeNotifications();
+    // Load saved bookmarks and course progress
+    useBookmarkStore.getState().initializeBookmarks();
+    useProgressStore.getState().initializeProgress();
     
     // Request notification permissions explicitly on startup
     requestNotificationPermissions();

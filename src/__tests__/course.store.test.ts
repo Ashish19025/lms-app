@@ -1,3 +1,6 @@
+jest.mock('../services/storage/asyncStorage', () => ({ storeData: jest.fn(), getData: jest.fn(() => Promise.resolve(null)) }));
+jest.mock('../services/api/course.api', () => ({ fetchCourses: jest.fn(() => Promise.reject(new Error('offline'))), fetchCourseById: jest.fn() }));
+
 import { useCourseStore } from '../store/course.store';
 
 describe('Course Store', () => {
@@ -41,5 +44,13 @@ describe('Course Store', () => {
     const { filteredCourses } = useCourseStore.getState();
     expect(filteredCourses.length).toBe(1);
     expect(filteredCourses[0].title).toBe('React Basics');
+  });
+
+  test("loadCourses keeps an error and stays empty when offline with no cache", async () => {
+    await useCourseStore.getState().loadCourses();
+    const st = useCourseStore.getState();
+    expect(st.error).toBe("offline");
+    expect(st.isLoading).toBe(false);
+    expect(st.courses).toEqual([]);
   });
 });

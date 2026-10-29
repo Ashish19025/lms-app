@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { apiClient } from '../services/api/client';
+import { API_BASE_URL } from '../utils/constants';
 
 describe('API Client', () => {
   test('should have axios instance', () => {
@@ -14,8 +15,8 @@ describe('API Client', () => {
     expect(apiClient.interceptors.response).toBeDefined();
   });
 
-  test('should have baseURL set to freeapi', () => {
-    expect(apiClient.defaults.baseURL).toBe('https://api.freeapi.app');
+  test('should have baseURL set from config', () => {
+    expect(apiClient.defaults.baseURL).toBe(API_BASE_URL);
   });
 
   test('should have timeout set to 10000ms', () => {

@@ -7,6 +7,10 @@ import { Course } from '../../types/course.types';
 import { Button } from '../../components/ui/Button';
 import { BookmarkButton } from '../../components/course/BookmarkButton';
 import { Ionicons } from '@expo/vector-icons';
+import { useProgressStore } from '../../store/progress.store';
+import { ProgressBar } from '../../components/course/ProgressBar';
+import { getLessons, LESSONS_PER_COURSE } from '../../utils/lessons';
+import { formatCurrency } from '../../utils/helpers';
 
 
 /** * CourseDetailsScreen - Displays detailed information about a specific course, including title, description, instructor, and enrollment options.
@@ -25,6 +29,12 @@ export default function CourseDetailsScreen() {
   const [isLoading, setIsLoading] = useState(true);
   // Get safe area insets for proper spacing on devices with notches or home indicators
   const insets = useSafeAreaInsets();
+  // Enrolment and lesson progress for this course
+  const courseId = Number(id);
+  const enrolled = useProgressStore((s) => s.enrolledIds.includes(courseId));
+  const done = useProgressStore((s) => s.completed[courseId]) || [];
+  const enroll = useProgressStore((s) => s.enroll);
+  const getNextLesson = useProgressStore((s) => s.getNextLesson);
 
   // Fetch course data when the component mounts or when the course ID changes
   useEffect(() => {
@@ -133,9 +143,40 @@ export default function CourseDetailsScreen() {
                 <Text className="text-gray-900 font-semibold">{course.brand}</Text>
              </View>
              <View className="flex-row justify-between mb-2">
-                <Text className="text-gray-500 font-medium">Stock</Text>
-                <Text className="text-gray-900 font-semibold">{course.stock} Available</Text>
+                <Text className="text-gray-500 font-medium">Lessons</Text>
+                <Text className="text-gray-900 font-semibold">{LESSONS_PER_COURSE}</Text>
              </View>
+           </View>
+
+           {/* Lessons: tap to open. Locked until enrolled. */}
+           <Text className="text-lg font-bold text-gray-900 mt-6 mb-2">Lessons</Text>
+           {enrolled && (
+             <View className="mb-3">
+               <ProgressBar progress={done.length / LESSONS_PER_COURSE} />
+             </View>
+           )}
+           <View className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+             {getLessons(course).map((lesson) => {
+               const isDone = done.includes(lesson.index);
+               return (
+                 <TouchableOpacity
+                   key={lesson.index}
+                   disabled={!enrolled}
+                   onPress={() => router.push(`/webview/${course.id}?lesson=${lesson.index}`)}
+                   className={`flex-row items-center p-4 ${lesson.index < LESSONS_PER_COURSE - 1 ? "border-b border-gray-100" : ""}`}
+                 >
+                   <Ionicons
+                     name={isDone ? "checkmark-circle" : enrolled ? "play-circle-outline" : "lock-closed-outline"}
+                     size={22}
+                     color={isDone ? "#10B981" : enrolled ? "#2563EB" : "#9CA3AF"}
+                   />
+                   <View className="flex-1 ml-3">
+                     <Text className="text-gray-900 font-medium" numberOfLines={1}>{lesson.index + 1}. {lesson.title}</Text>
+                     <Text className="text-xs text-gray-500">{lesson.minutes} min</Text>
+                   </View>
+                 </TouchableOpacity>
+               );
+             })}
            </View>
         </View>
       </ScrollView>
@@ -144,14 +185,17 @@ export default function CourseDetailsScreen() {
       <View className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 flex-row items-center justify-between">
         <View className="flex-col w-1/3">
           <Text className="text-xs text-gray-500 uppercase font-semibold">Price</Text>
-          <Text className="text-2xl font-bold text-gray-900">₹{(course.price - (course.price * course.discountPercentage / 100)).toFixed(2)}</Text>
-          <Text className="text-xs text-gray-400 line-through">₹{course.price.toFixed(2)}</Text>
+          <Text className="text-2xl font-bold text-gray-900">{formatCurrency(course.price - (course.price * course.discountPercentage / 100))}</Text>
+          <Text className="text-xs text-gray-400 line-through">{formatCurrency(course.price)}</Text>
         </View>
         {/* Enroll button that navigates to a WebView for course enrollment */}
         <View className="flex-1 ml-4 shadow-sm">
-          <Button 
-            title="Enroll Now" 
-            onPress={() => router.push(`/webview/${course.id}`)} 
+          <Button
+            title={!enrolled ? "Enroll Now" : done.length >= LESSONS_PER_COURSE ? "Review Course" : done.length ? "Continue" : "Start Course"}
+            onPress={async () => {
+              if (!enrolled) await enroll(course.id);
+              router.push(`/webview/${course.id}?lesson=${getNextLesson(course.id)}`);
+            }}
           />
         </View>
       </View>

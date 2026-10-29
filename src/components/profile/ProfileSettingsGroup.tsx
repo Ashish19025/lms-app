@@ -7,6 +7,8 @@ interface SettingItem {
   title: string;
   // icon - The name of the Ionicons icon to be displayed next to the setting title
   icon: string;
+  // onPress - Called when the row is tapped
+  onPress?: () => void;
 }
 
 interface Props {
@@ -34,6 +36,7 @@ export function ProfileSettingsGroup({ settings }: Props) {
           <TouchableOpacity
             key={item.title}
             activeOpacity={0.7}
+            onPress={item.onPress}
             className={`flex-row items-center px-5 py-5 ${
               index !== settings.length - 1
                 ? 'border-b border-gray-100'

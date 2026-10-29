@@ -3,70 +3,74 @@ import { View, ActivityIndicator, Text, RefreshControl } from 'react-native';
 import { LegendList } from '@legendapp/list';
 import { Course } from '../../types/course.types';
 import { CourseCard } from './CourseCard';
-
+import { CourseCardSkeleton } from './CourseCardSkeleton';
 
 interface CourseListProps {
-  // courses - An array of course data to display in the list
+  // courses - The courses to show
   courses: Course[];
-  // isLoading - A boolean indicating if the course data is currently being loaded
+  // isLoading - True while the first page is loading or refreshing
   isLoading: boolean;
-  // onRefresh - A function to call when the user pulls to refresh the course list
+  // isLoadingMore - True while the next page is loading (shows a footer spinner)
+  isLoadingMore?: boolean;
+  // onRefresh - Called on pull-to-refresh
   onRefresh: () => void;
+  // onEndReached - Called near the bottom of the list to load more
+  onEndReached?: () => void;
+  // header - Optional content shown above the courses (scrolls with the list)
+  header?: React.ReactElement | null;
 }
 
-/* CourseList - A component to display a list of courses with loading and empty states
-   Props:
-     - courses: An array of course data to display in the list
-      - isLoading: A boolean indicating if the course data is currently being loaded
-      - onRefresh: A function to call when the user pulls to refresh the course list
-    Features:
-      - Displays a loading indicator while courses are being fetched
-      - Shows an empty state message if no courses are found
-      - Renders a list of CourseCard components for each course in the courses array
-      - Supports pull-to-refresh functionality to reload the course data
-*/
-export const CourseList: React.FC<CourseListProps> = ({ courses, isLoading, onRefresh }) => {
-  // Render function for each course item in the list, using CourseCard to display course details
-  const renderItem = ({ item }: { item: Course }) => {
-    return <CourseCard course={item} />;
-  };
+/* CourseList - Course feed with skeleton loading, pull-to-refresh, infinite scroll and an empty state */
+export const CourseList: React.FC<CourseListProps> = ({
+  courses,
+  isLoading,
+  isLoadingMore = false,
+  onRefresh,
+  onEndReached,
+  header = null,
+}) => {
+  const renderItem = useCallback(({ item }: { item: Course }) => <CourseCard course={item} />, []);
 
-  // Memoized callback for handling pull-to-refresh action, calls the onRefresh prop function
-  const handleRefresh = useCallback(() => {
-    onRefresh();
-  }, [onRefresh]);
-
-  // Show loading indicator if data is being loaded and there are no courses to display yet
+  // First load: show placeholder cards instead of a bare spinner
   if (isLoading && courses.length === 0) {
     return (
-      <View className="flex-1 items-center justify-center py-10">
-        <ActivityIndicator size="large" color="#2563EB" />
-      </View>
-    );
-  }
-
-  // Show empty state message if loading is complete but no courses were found
-  if (courses.length === 0) {
-    return (
-      <View className="flex-1 items-center justify-center p-8 mt-10">
-        <Text className="text-gray-500 text-base text-center">No courses found matching your criteria.</Text>
+      <View style={{ padding: 16 }}>
+        {header}
+        {[0, 1, 2].map((i) => (
+          <CourseCardSkeleton key={i} />
+        ))}
       </View>
     );
   }
 
   return (
     <LegendList
-      data={courses} //Features: Pass the courses array as the data source for the list
+      data={courses}
       keyExtractor={(item) => item.id.toString()}
-      renderItem={renderItem} //Features: Use the renderItem function to render each course item using the CourseCard component
+      renderItem={renderItem}
       estimatedItemSize={280}
-      contentContainerStyle={{ padding: 16 }}
+      contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+      onEndReached={onEndReached}
+      onEndReachedThreshold={0.5}
+      ListHeaderComponent={header}
+      ListEmptyComponent={
+        <View className="items-center justify-center p-8 mt-10">
+          <Text className="text-gray-500 text-base text-center">No courses found matching your criteria.</Text>
+        </View>
+      }
+      ListFooterComponent={
+        isLoadingMore ? (
+          <View className="py-6">
+            <ActivityIndicator color="#2563EB" />
+          </View>
+        ) : null
+      }
       refreshControl={
         <RefreshControl
           refreshing={isLoading && courses.length > 0}
-          onRefresh={handleRefresh}
-          colors={['#2563EB']} // Android
-          tintColor="#2563EB" // iOS
+          onRefresh={onRefresh}
+          colors={['#2563EB']}
+          tintColor="#2563EB"
         />
       }
     />

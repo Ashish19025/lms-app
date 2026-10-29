@@ -1,7 +1,6 @@
 import { Redirect } from 'expo-router';
 import { useAuthStore } from '../store/auth.store';
 import { View, ActivityIndicator } from 'react-native';
-import { login } from '../services/api/auth.api';
 
 /** Index - The main entry point for the application. It handles the initial redirection based on authentication status.
  */
@@ -17,6 +16,6 @@ export default function Index() {
     );
   }
 
-  // Bypass auth checks for now and go directly to home
+  // The root layout redirects to login if there's no user
   return <Redirect href="/(tabs)/home" />;
 }

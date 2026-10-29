@@ -3,6 +3,10 @@ import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Course } from '../../types/course.types';
 import { useRouter } from 'expo-router';
 import { BookmarkButton } from './BookmarkButton';
+import { ProgressBar } from './ProgressBar';
+import { useProgressStore } from '../../store/progress.store';
+import { formatCurrency } from '../../utils/helpers';
+import { LESSONS_PER_COURSE } from '../../utils/lessons';
 
 interface CourseCardProps {
   // course - The course data to display in the card
@@ -20,6 +24,9 @@ interface CourseCardProps {
 */
 export const CourseCard = React.memo(function CourseCard({ course }: CourseCardProps) {
   const router = useRouter();
+  // Subscribe to this course's progress so the bar updates live
+  const enrolled = useProgressStore((s) => s.enrolledIds.includes(course.id));
+  const doneCount = useProgressStore((s) => s.completed[course.id]?.length || 0);
 
   // Handle press event to navigate to course detail screen
   const handlePress = () => {
@@ -72,9 +79,15 @@ export const CourseCard = React.memo(function CourseCard({ course }: CourseCardP
           )}
           {/* Display course price, formatted as currency, or "Free" if price is 0 */}
           <View>
-            <Text className="text-sm font-bold text-gray-900">${course.price}</Text>
+            <Text className="text-sm font-bold text-gray-900">{formatCurrency(course.price)}</Text>
           </View>
         </View>
+        {/* Progress for enrolled courses */}
+        {enrolled && (
+          <View className="mt-3">
+            <ProgressBar progress={doneCount / LESSONS_PER_COURSE} />
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   );

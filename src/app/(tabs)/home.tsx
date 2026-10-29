@@ -3,7 +3,7 @@ import { View, Text, Animated, Easing, TouchableOpacity, TextInput } from 'react
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCourseStore } from '../../store/course.store';
 import { CourseList } from '../../components/course/CourseList';
-import { Input } from '../../components/ui/Input';
+import { ContinueLearning } from '../../components/course/ContinueLearning';
 import { useAuthStore } from '../../store/auth.store';
 import { useNotificationStore } from '../../store/notification.store';
 import { useRouter } from 'expo-router';
@@ -13,7 +13,7 @@ export default function HomeScreen() {
   // Extract user information from the auth store
   const { user } = useAuthStore();
   // Extract course-related state and actions from the course store
-  const { filteredCourses, isLoading, loadCourses, searchQuery, setSearchQuery } = useCourseStore();
+  const { filteredCourses, isLoading, isLoadingMore, loadCourses, loadMoreCourses, searchQuery, setSearchQuery, isFromCache } = useCourseStore();
   // Extract notifications from the notification store
   const { notifications } = useNotificationStore();
   // Get router instance for navigation
@@ -111,11 +111,22 @@ export default function HomeScreen() {
         </View>
       </Animated.View>
 
-      {/* Course list with pull-to-refresh functionality */}
-      <CourseList 
+      {/* Notice when showing saved courses because the server could not be reached */}
+      {isFromCache && (
+        <View className="mx-4 mt-2 px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 flex-row items-center">
+          <Ionicons name="cloud-offline-outline" size={16} color="#B45309" />
+          <Text className="ml-2 text-xs text-amber-800 flex-1">Showing saved courses. Pull down to retry.</Text>
+        </View>
+      )}
+
+      {/* Course feed: pull to refresh, loads more on scroll */}
+      <CourseList
         courses={filteredCourses}
         isLoading={isLoading}
+        isLoadingMore={isLoadingMore}
         onRefresh={loadCourses}
+        onEndReached={searchQuery.trim() ? undefined : loadMoreCourses}
+        header={searchQuery.trim() ? null : <ContinueLearning />}
       />
     </SafeAreaView>
   );

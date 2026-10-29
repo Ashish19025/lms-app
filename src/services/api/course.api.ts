@@ -13,10 +13,10 @@ const formatCourseData = (course: any, instructor?: Instructor): Course => {
   } as Course;
 };
 
-export const fetchCourses = async (page: number = 1, limit: number = 20): Promise<Course[]> => {
+export const fetchCourses = async (page: number = 1, limit: number = 20, query?: string): Promise<{ courses: Course[]; hasMore: boolean }> => {
   // Fetch both courses and dummy instructors in parallel directly at the API layer
   const [coursesRes, instructorsRes] = await Promise.all([
-    apiClient.get(`/api/v1/public/randomproducts?page=${page}&limit=${limit}`),
+    apiClient.get(`/api/v1/public/randomproducts?page=${page}&limit=${limit}${query ? `&query=${encodeURIComponent(query)}` : ''}`),
     apiClient.get(`/api/v1/public/randomusers?page=${page}&limit=${limit}`)
   ]);
 
@@ -26,9 +26,10 @@ export const fetchCourses = async (page: number = 1, limit: number = 20): Promis
   const rawInstructors = instructorsRes.data.data.data;
 
   // Map courses and attach instructors here, not in the store
-  return rawCourses.map((course: any, index: number) => 
+  const courses = rawCourses.map((course: any, index: number) =>
     formatCourseData(course, rawInstructors[index % rawInstructors.length])
   );
+  return { courses, hasMore: !!coursesRes.data.data.nextPage };
 };
 
 export const fetchCourseById = async (id: number): Promise<Course> => {

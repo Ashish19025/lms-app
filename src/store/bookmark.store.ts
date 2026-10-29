@@ -9,18 +9,18 @@ import { useCourseStore } from './course.store';
 const BOOKMARKS_KEY = '@bookmarked_courses';
 
 /**
- * AppState - Manages global application state related to bookmarked courses, including initialization and toggling of bookmarks.
+ * BookmarkState - Manages bookmarked courses, including initialization and toggling of bookmarks.
  */
-interface AppState {
+interface BookmarkState {
   bookmarkedIds: number[];
   initializeBookmarks: () => Promise<void>;
   toggleBookmark: (id: number) => Promise<void>;
 }
 
 /**
- * useAppStore - A Zustand store that manages the state of bookmarked courses, allowing users to bookmark and unbookmark courses while persisting this information across app sessions using async storage.
+ * useBookmarkStore - A Zustand store that manages the state of bookmarked courses, allowing users to bookmark and unbookmark courses while persisting this information across app sessions using async storage.
  */
-export const useAppStore = create<AppState>((set, get) => ({
+export const useBookmarkStore = create<BookmarkState>((set, get) => ({
   bookmarkedIds: [],
   
   initializeBookmarks: async () => {

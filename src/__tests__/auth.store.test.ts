@@ -4,7 +4,7 @@ describe('Auth Store', () => {
   beforeEach(() => {
     const { user } = useAuthStore.getState();
     if (user) {
-      useAuthStore.setState({ user: null, token: null });
+      useAuthStore.setState({ user: null });
     }
   });
 

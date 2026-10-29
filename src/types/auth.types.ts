@@ -2,7 +2,7 @@ export interface User {
   _id: string;
   username: string;
   email: string;
-  avatar?: string;
+  avatar?: string | { url: string };
 }
 
 export interface AuthResponse {

@@ -1,9 +1,12 @@
 import axios from 'axios';
+import NetInfo from '@react-native-community/netinfo';
+import { API_BASE_URL } from '../../utils/constants';
+import { logger } from '../../lib/logger';
 import { getToken, getRefreshToken, saveToken, saveRefreshToken, removeToken, removeUser, removeRefreshToken } from '../storage/secureStorage';
 
 // Create an Axios instance with a base URL and timeout for API requests
 export const apiClient = axios.create({
-  baseURL: 'https://api.freeapi.app',
+  baseURL: API_BASE_URL,
   timeout: 10000,
 });
 
@@ -20,6 +23,12 @@ apiClient.interceptors.request.use(async (config) => {
 }, (error) => {
   return Promise.reject(error);
 });
+
+const MAX_RETRIES = 2;
+
+// A request is worth retrying if it timed out, never got a response, or hit a server error
+const isRetryable = (error: any) =>
+  error.code === 'ECONNABORTED' || !error.response || error.response.status >= 500;
 
 // Flag to indicate if a token refresh is currently in progress and a queue to hold failed requests while refreshing
 let isRefreshing = false;
@@ -42,17 +51,20 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    console.error('API Error:', error?.response?.data || error.message);
 
-    // Initialize retry count if not present
-    if (originalRequest && !originalRequest.retry) originalRequest.retry = 0;
+    // Retry only transient failures (timeouts / 5xx), never when the device is offline
+    if (originalRequest && isRetryable(error) && (originalRequest.retry || 0) < MAX_RETRIES) {
+      const net = await NetInfo.fetch().catch(() => null);
+      if (net?.isConnected !== false) {
+        originalRequest.retry = (originalRequest.retry || 0) + 1;
+        await new Promise((resolve) => setTimeout(resolve, Math.pow(2, originalRequest.retry - 1) * 1000));
+        return apiClient(originalRequest);
+      }
+    }
 
-    // Retry transient server errors with backoff
-    if (originalRequest && originalRequest.retry < 3 && (!error.response || error.response.status >= 500)) {
-      originalRequest.retry += 1;
-      const delay = new Promise((resolve) => setTimeout(resolve, Math.pow(2, originalRequest.retry - 1) * 1000));
-      await delay;
-      return apiClient(originalRequest);
+    // Log once, after retries are used up (401s are handled below)
+    if (error.response?.status !== 401) {
+      logger.warn(`API ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url} failed:`, error?.response?.data?.message || error.message);
     }
 
     // Handle 401 by attempting refresh token flow
